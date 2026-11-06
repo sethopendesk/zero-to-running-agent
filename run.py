@@ -1,73 +1,83 @@
-"""Run the agent in your terminal.
+"""Phase 1 CLI.
 
-    python run.py                                   # uses the sample README
-    python run.py https://github.com/owner/repo     # uses your project's README
-    python run.py data/injected_readme.md           # the prompt injection example
+    python run.py                               # bundled business_listings.json
+    python run.py path/to/business_listings.json # another JSON array
+
+Run from the project root with your virtual environment active.
 """
-import os
 import sys
 import uuid
 
 from langgraph.types import Command
 
+from agent import config
 from agent.graph import build_graph
 
 
-def show_gathered(state: dict) -> None:
-    """Before Reason exists, all we have is what Gather collected."""
-    profile = state.get("profile", {})
-    print(f"\nYour project: {profile.get('name')}")
-    print(f"  topics: {', '.join(profile.get('topics', [])) or 'none found'}")
-    print(f"  read from: {os.path.relpath(profile['source']) if os.path.isabs(profile.get('source', '')) else profile.get('source')}")
-    cfps = state.get("opportunities", [])
-    print(f"\nOpen CFPs ({len(cfps)})")
-    for cfp in cfps:
-        print(f"  closes {cfp['cfp_deadline']}  {cfp['name']}  ({cfp['location']})")
-
-
 def show_results(state: dict) -> None:
-    if not state.get("scores"):
-        show_gathered(state)
-        return
-    print("\nRanked opportunities")
-    for fit in state["scores"]:
-        # route and cfp_deadline only exist once Check and Decide are built
-        route = fit.get("route", "-")
-        closes = f"  (closes {fit['cfp_deadline']})" if "cfp_deadline" in fit else ""
-        print(f"  {fit['topic_fit']:>2}/10  {route:<12} {fit['cfp_name']}{closes}")
-    for r in state.get("rejected", []):
-        print(f"  rejected     {r['cfp_name']}  ({r['why']})")
+    summary = state.get("source_summary", {})
+    eligible = state.get("eligible", [])
+    manual = state.get("manual_review", [])
+    rejected = state.get("rejected", [])
+    selected = state.get("selected", [])
+    print(f"\nLoaded {summary.get('total', 0)} business listings from {summary.get('source', 'unknown')}.")
+    print(f"Eligible below ${config.MAX_ASKING_PRICE:,}: {len(eligible)} (snapshot only; not live-verified)")
+    print(f"Requires manual price/status review: {len(manual)}; rejected: {len(rejected)}")
+    print(f"\nSelected {len(selected)} lowest-priced eligible listings for email drafts:")
+    for item in selected:
+        print(f"  ${item['asking_price_usd']:>10,.0f}  {item['title']}  [{item['source']}]")
+    if manual:
+        print("\nManual review sample (first 10):")
+        for item in manual[:10]:
+            print(f"  {item['title']}: {item['why']}")
+
+
+def read_body(original: str) -> str:
+    print("Paste replacement body, ending with a line containing only END. Enter immediately to keep original.")
+    first = input()
+    if not first:
+        return original
+    lines = [first]
+    while lines[-1] != "END":
+        lines.append(input())
+    return "\n".join(lines[:-1]).strip() or original
 
 
 def ask_human(drafts: list[dict]) -> list[dict]:
     decisions = []
-    for d in drafts:
-        print(f"\n--- Draft for {d['cfp_name']} ---\n{d['title']}\n\n{d['abstract']}\n")
-        choice = input("Approve, edit or reject? [a/e/r] ").strip().lower()
+    for draft in drafts:
+        print(f"\n--- {draft['title']} ---")
+        print(f"Listing: {draft.get('listing_url')}")
+        print(f"Subject: {draft['subject']}\n\n{draft['body']}\n")
+        if draft.get("generation_note"):
+            print(draft["generation_note"])
+        choice = input("Approve and save, edit, or reject? [a/e/r, default r] ").strip().lower()
         if choice.startswith("e"):
-            decisions.append({"cfp_id": d["cfp_id"], "action": "edit", "abstract": input("New abstract: ")})
+            subject = input("New subject (Enter to keep original): ").strip() or draft["subject"]
+            body = read_body(draft["body"])
+            decisions.append({"listing_key": draft["listing_key"], "action": "edit", "subject": subject, "body": body})
         elif choice.startswith("a"):
-            decisions.append({"cfp_id": d["cfp_id"], "action": "approve"})
+            decisions.append({"listing_key": draft["listing_key"], "action": "approve"})
         else:
-            decisions.append({"cfp_id": d["cfp_id"], "action": "reject"})
+            decisions.append({"listing_key": draft["listing_key"], "action": "reject"})
     return decisions
 
 
 def main() -> None:
+    source = sys.argv[1] if len(sys.argv) > 1 else str(config.DEFAULT_LISTINGS)
     run_id = uuid.uuid4().hex[:8]
     graph = build_graph()
-    config = {"configurable": {"thread_id": run_id}}
-    source = sys.argv[1] if len(sys.argv) > 1 else None
-
-    result = graph.invoke({"run_id": run_id, "readme_source": source}, config)
+    context = {"configurable": {"thread_id": run_id}}
+    result = graph.invoke({"run_id": run_id, "listings_source": source}, context)
     show_results(result)
-
     if "__interrupt__" in result:
         drafts = result["__interrupt__"][0].value["drafts"]
-        result = graph.invoke(Command(resume=ask_human(drafts)), config)
-        approved = [d for d in result["drafts"] if d["status"] == "approved"]
-        print(f"\n{len(approved)} draft(s) approved and saved to outputs/. Nothing was submitted.")
-    print(f"Run {run_id} done. Logs are in logs/runs.jsonl")
+        result = graph.invoke(Command(resume=ask_human(drafts)), context)
+        count = sum(d.get("status") == "approved" for d in result["drafts"])
+        print(f"\nSaved {count} approved email draft(s) in outputs/. Nothing was emailed.")
+    else:
+        print("\nNo eligible listings were selected for email drafting.")
+    print(f"Run {run_id} finished. Logs: logs/runs.jsonl")
 
 
 if __name__ == "__main__":

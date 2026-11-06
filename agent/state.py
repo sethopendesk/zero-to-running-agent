@@ -1,17 +1,17 @@
-"""The shared notebook every node reads from and writes to.
-
-Each node returns only the fields it changes, and LangGraph merges them in.
-"""
-from typing import TypedDict
+"""State shared across Phase 1's LangGraph stages."""
+from typing import Any, TypedDict
 
 
 class AgentState(TypedDict, total=False):
     run_id: str
-    readme_source: str        # a GitHub URL or local path, set when the run starts
-
-    profile: dict             # Gather. what your project is about, built from the README
-    opportunities: list       # Gather. open CFPs from the fixtures file
-    scores: list              # Reason, then Check and Decide. one fit per CFP
-    rejected: list            # Check. what the gate threw out, and why
-    drafts: list              # Act. proposals waiting on you
-    decisions: list           # Act. what you approved, edited or rejected
+    listings_source: str | None          # CLI path; API supplies input_listings instead
+    input_listings: list[dict[str, Any]] # parsed JSON, never a server-side path from HTTP
+    source_summary: dict
+    opportunities: list[dict]
+    eligible: list[dict]
+    manual_review: list[dict]
+    rejected: list[dict]
+    ranked: list[dict]
+    selected: list[dict]
+    drafts: list[dict]
+    decisions: list[dict]

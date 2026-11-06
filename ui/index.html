@@ -1,479 +1,323 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
-<title>Mic Check</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Cpolygon points='14,0 2,18 10,18 7,32 22,12 13,12' fill='%2300F0FF'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
-<style>
-/* Daphne Merlot brand kit v2.0. Neon on black only, sharp corners, glow instead of shadow. */
-:root {
-  --wine-900: #2A0B18; --wine-800: #3D1026; --wine-700: #521631; --wine-600: #6B1C3D; --wine-500: #8A2750; --wine-400: #A83A68;
-  --ink-0: #0A0A0A; --ink-1: #120C0F; --ink-2: #1A1116; --ink-3: #241820; --ink-4: #33252D;
-  --chrome-100: #EDEDF2; --chrome-300: #C0C0C8; --chrome-500: #8E8E98; --chrome-700: #5C5C66;
-  --electric: #00E5FF; --logo-cyan: #00F0FF; --coral: #FF6B6B; --pink: #FF4DA6;
-
-  --bg-page: var(--ink-0); --surface-sunken: #000; --surface-card: var(--ink-1); --surface-raised: var(--ink-2);
-  --fg-1: #FFFFFF; --fg-2: var(--chrome-300); --fg-3: var(--chrome-500); --disabled: var(--chrome-700);
-  --link: var(--electric); --danger: var(--coral); --highlight: var(--pink);
-
-  --border-subtle: rgba(192,192,200,.22); --border-strong: rgba(192,192,200,.5); --border-chrome: var(--chrome-300); --border-focus: var(--electric);
-
-  --font-display: "Bebas Neue", Oswald, "Arial Narrow", Impact, sans-serif;
-  --font-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-label: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-accent: "Instrument Serif", Georgia, serif;
-
-  --space-1: 2px; --space-2: 4px; --space-3: 8px; --space-4: 12px; --space-5: 16px; --space-6: 24px; --space-7: 32px; --space-8: 48px; --space-9: 64px; --space-10: 96px;
-  --radius-control: 2px; --radius-card: 6px; --radius-pill: 999px;
-
-  --glow-electric: 0 0 0 1px rgba(0,229,255,.9), 0 0 22px rgba(0,229,255,.35);
-  --glow-pink: 0 0 0 1px rgba(255,77,166,.8), 0 0 22px rgba(255,77,166,.3);
-  --glow-coral: 0 0 0 1px rgba(255,107,107,.8), 0 0 22px rgba(255,107,107,.3);
-  --glow-wine: 0 0 28px rgba(138,39,80,.45);
-
-  --ease-snap: cubic-bezier(.2,.9,.1,1); --ease-glide: cubic-bezier(.4,0,.2,1);
-  --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 360ms;
-}
-* { box-sizing: border-box; }
-html { background: var(--bg-page); }
-body {
-  margin: 0; background: var(--bg-page); color: var(--fg-2);
-  font: 400 16px/1.55 var(--font-body); -webkit-font-smoothing: antialiased;
-}
-.wrap { max-width: 880px; margin: 0 auto; padding: 0 var(--space-5) var(--space-10); }
-h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 400; color: var(--fg-1); letter-spacing: .02em; text-transform: uppercase; }
-p { margin: 0; }
-a { color: var(--link); text-underline-offset: 3px; }
-a:hover { text-decoration-thickness: 2px; }
-.label { font: 500 11px/1.2 var(--font-label); letter-spacing: .14em; text-transform: uppercase; }
-.eyebrow { color: var(--electric); }
-.meta { color: var(--fg-3); }
-
-/* header */
-.top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); padding: var(--space-6) 0; border-bottom: 1px solid var(--border-subtle); }
-.brand { display: flex; align-items: center; gap: var(--space-4); font: 28px/1 var(--font-display); letter-spacing: .06em; color: var(--fg-1); }
-.brand svg { height: 28px; width: auto; display: block; }
-.tag { display: inline-flex; align-items: center; gap: var(--space-3); padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); color: var(--fg-2); }
-.tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--electric); box-shadow: 0 0 8px var(--electric); }
-.tag.mock i { background: var(--pink); box-shadow: 0 0 8px var(--pink); }
-
-/* hero */
-.hero { padding: var(--space-9) 0 var(--space-7); }
-.hero h1 { font-size: clamp(52px, 11vw, 96px); line-height: .92; margin: var(--space-4) 0 var(--space-6); }
-.hero h1 em { font: italic 400 1.02em var(--font-accent); text-transform: none; letter-spacing: 0; color: var(--electric); }
-.lead { font-size: 20px; line-height: 1.5; max-width: 38em; color: var(--fg-2); }
-
-/* sections */
-section { margin-top: var(--space-9); }
-.sec-head { display: flex; align-items: baseline; gap: var(--space-5); padding-bottom: var(--space-4); margin-bottom: var(--space-6); border-bottom: 1px solid var(--border-subtle); }
-.sec-head h2 { font-size: 44px; line-height: 1; }
-.sec-head .label { color: var(--electric); }
-
-/* form */
-.field { display: grid; gap: var(--space-3); }
-.field label { color: var(--fg-3); }
-.row { display: flex; gap: var(--space-4); flex-wrap: wrap; align-items: flex-start; }
-.row .field { flex: 1 1 320px; }
-.row .field.action { flex: 0 0 auto; }
-input[type=url], textarea {
-  width: 100%; background: var(--surface-sunken); color: var(--fg-1); border: 1px solid var(--border-strong); border-radius: var(--radius-control);
-  font: 400 16px/1.5 var(--font-body); padding: 12px 14px; transition: border-color var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap);
-}
-input[type=url]::placeholder { color: var(--disabled); }
-input[type=url]:focus, textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: var(--glow-electric); }
-input[aria-invalid=true] { border-color: var(--danger); }
-.hint { font-size: 13px; color: var(--fg-3); }
-.hint.error { color: var(--danger); }
-textarea { min-height: 148px; resize: vertical; }
-
-/* buttons */
-.btn {
-  appearance: none; cursor: pointer; font: 400 20px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
-  min-height: 48px; padding: 0 var(--space-6); border-radius: var(--radius-control); border: 1px solid var(--border-strong);
-  background: var(--wine-600); color: var(--fg-1);
-  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap), background var(--dur-fast) var(--ease-snap);
-}
-.btn:hover:not(:disabled) { background: var(--wine-500); box-shadow: var(--glow-wine); }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:focus-visible, .choice input:focus-visible + span { outline: 2px solid var(--electric); outline-offset: 3px; }
-.btn.cyan { background: var(--electric); border-color: var(--electric); color: var(--ink-0); }
-.btn.cyan:hover:not(:disabled) { background: var(--logo-cyan); box-shadow: var(--glow-electric); }
-.btn:disabled { cursor: not-allowed; background: var(--wine-900); border-color: var(--border-subtle); color: var(--disabled); }
-.btn.cyan:disabled { background: var(--ink-3); border-color: var(--border-subtle); }
-
-/* cards, badges */
-.stack { display: grid; gap: var(--space-4); }
-.card { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-card); padding: var(--space-6); }
-.card.raised { background: var(--surface-raised); border-color: var(--border-strong); }
-.card.wine { background: linear-gradient(180deg, var(--wine-700), var(--wine-900)); border-color: var(--border-strong); }
-.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-5); }
-.card h3 { font-size: 32px; line-height: 1.05; margin: var(--space-3) 0; }
-.card .reason { color: var(--fg-2); max-width: 46em; }
-.card .foot { display: flex; flex-wrap: wrap; gap: var(--space-5); margin-top: var(--space-5); align-items: center; }
-.score { text-align: right; flex: none; }
-.score b { font: 400 56px/1 var(--font-display); color: var(--fg-1); }
-.score span { font: 500 12px var(--font-label); color: var(--fg-3); }
-.badge { display: inline-block; padding: 4px 8px; border-radius: var(--radius-control); font: 500 11px/1.2 var(--font-label); letter-spacing: .14em; text-transform: uppercase; }
-.badge.apply { background: var(--electric); color: var(--ink-0); }
-.badge.maybe { background: var(--pink); color: var(--ink-0); }
-.badge.skip, .badge.plain { border: 1px solid var(--border-chrome); color: var(--fg-2); }
-.badge.reject { background: var(--coral); color: var(--ink-0); }
-.badge.wine { background: var(--wine-600); color: var(--fg-1); }
-.card.rejected { border-color: rgba(255,107,107,.45); background: var(--ink-1); }
-.card.rejected h3 { font-size: 24px; }
-.why { color: var(--danger); }
-.project { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; margin-bottom: var(--space-5); }
-.project strong { font: 28px/1 var(--font-display); color: var(--fg-1); letter-spacing: .04em; text-transform: uppercase; }
-
-/* review choices */
-.choices { display: flex; gap: var(--space-3); margin-top: var(--space-5); border: 0; padding: 0; }
-.choices legend { padding: 0; margin-bottom: var(--space-3); color: var(--fg-3); }
-.choice { position: relative; }
-.choice input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.choice span {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-6); cursor: pointer;
-  font: 400 20px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--fg-2);
-  border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-sunken);
-  transition: box-shadow var(--dur-base) var(--ease-snap), color var(--dur-fast) var(--ease-snap);
-}
-.choice input:checked + span.approve { color: var(--electric); box-shadow: var(--glow-electric); }
-.choice input:checked + span.reject { color: var(--coral); box-shadow: var(--glow-coral); }
-.choice input:disabled + span { cursor: not-allowed; opacity: .6; }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-5); align-items: center; margin-top: var(--space-6); }
-
-code.path { font: 500 14px var(--font-label); color: var(--fg-1); background: var(--ink-3); padding: 2px 6px; border-radius: var(--radius-control); }
-
-/* status and toasts */
-.toast { margin-top: var(--space-5); padding: var(--space-4) var(--space-5); background: var(--ink-2); border: 1px solid var(--electric); border-radius: var(--radius-card); box-shadow: var(--glow-electric); display: flex; gap: var(--space-4); align-items: baseline; }
-.toast.error { border-color: var(--coral); box-shadow: var(--glow-coral); }
-.toast.info { border-color: var(--border-strong); box-shadow: none; }
-.toast .label { flex: none; color: var(--electric); }
-.toast.error .label { color: var(--coral); }
-.toast.info .label { color: var(--pink); }
-.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--electric); animation: spin .8s linear infinite; flex: none; align-self: center; }
-@keyframes spin { to { transform: rotate(360deg); } }
-[hidden] { display: none !important; }
-footer { margin-top: var(--space-10); padding-top: var(--space-5); border-top: 1px solid var(--border-subtle); }
-@media (max-width: 560px) {
-  .card-top { flex-direction: column; }
-  .score { text-align: left; }
-  .sec-head h2 { font-size: 36px; }
-  .btn { width: 100%; }
-  .row .field.action { flex: 1 1 100%; }
-  .choice span { padding: 0 var(--space-5); }
-}
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation-duration: 2s !important; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business Interest Agent | Phase 1</title>
+  <style>
+    :root { color-scheme: dark; --bg: #101318; --card: #1a2028; --border: #34404c;
+      --text: #f1f5fa; --muted: #b4bfcc; --accent: #6edbcc; --danger: #ff999e; --warn: #f4cc87; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg); color: var(--text); }
+    main { max-width: 1050px; margin: 0 auto; padding: 38px 24px 90px; }
+    h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.14; margin: 10px 0 15px; }
+    h2 { font-size: 23px; margin: 0 0 15px; }
+    h3 { font-size: 17px; margin: 0 0 5px; }
+    p { margin: 6px 0; } a { color: var(--accent); text-underline-offset: 2px; }
+    .eyebrow { color: var(--accent); letter-spacing: .13em; text-transform: uppercase; font-size: 12px; font-weight: 700; }
+    .subtle, .small { color: var(--muted); } .small { font-size: 13px; }
+    section { margin: 28px 0; }
+    .panel, .listing, .draft, details { border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+    .panel { padding: 22px; }
+    .flex { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .space-between { justify-content: space-between; }
+    input[type=file], input[type=text], textarea { width: 100%; color: var(--text); background: #101318;
+      border: 1px solid #556371; border-radius: 7px; padding: 12px; font: inherit; }
+    input[type=file] { max-width: 540px; } textarea { min-height: 180px; resize: vertical; }
+    input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    button { padding: 12px 19px; min-height: 45px; border: 1px solid var(--accent);
+      border-radius: 7px; color: #081814; background: var(--accent); cursor: pointer; font: 700 14px system-ui; }
+    button.secondary { background: transparent; color: var(--accent); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:hover:not(:disabled) { filter: brightness(1.07); }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; margin: 16px 0; }
+    .stat { border: 1px solid var(--border); background: #141a21; border-radius: 8px; padding: 14px; }
+    .stat strong { display: block; font-size: 28px; }
+    .stat span { font-size: 12px; color: var(--muted); }
+    .item-list { display: grid; gap: 9px; }
+    .listing { padding: 14px 17px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .listing .title { font-weight: 700; }
+    .listing .right { text-align: right; min-width: 112px; }
+    .pill { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; font-size: 11px; color: var(--muted); margin-left: 7px; }
+    .pill.selected { border-color: var(--accent); color: var(--accent); }
+    details { margin-top: 12px; padding: 12px 17px; }
+    summary { cursor: pointer; font-weight: 700; }
+    .detail-list { padding-top: 15px; display: grid; gap: 12px; }
+    .detail-row { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .draft { padding: 20px; margin-bottom: 14px; }
+    .draft header { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; margin-bottom: 14px; }
+    .field { margin: 13px 0; }
+    .field label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 700; }
+    fieldset { padding: 13px; border: 1px solid var(--border); border-radius: 7px; margin-top: 13px; }
+    legend { padding: 0 7px; color: var(--muted); }
+    fieldset label { margin-right: 24px; cursor: pointer; }
+    fieldset input { accent-color: var(--accent); }
+    .notice { padding: 12px 15px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); margin-top: 15px; }
+    .notice.error { color: var(--danger); border-color: var(--danger); }
+    .notice.success { color: var(--accent); border-color: var(--accent); }
+    .warn { color: var(--warn); }
+    [hidden] { display: none !important; }
+    footer { margin-top: 45px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 18px; font-size: 13px; }
+    @media(max-width: 600px) { main { padding: 25px 15px 70px; } .panel,.draft { padding: 16px; } .listing .right { text-align: left; } }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <svg viewBox="0 0 24 32" aria-hidden="true"><polygon points="14,0 2,18 10,18 7,32 22,12 13,12" fill="#00F0FF"/></svg>
-      <span>Mic Check</span>
-    </div>
-    <span class="tag label" id="model-tag" hidden><i></i><span id="model-text"></span></span>
-  </header>
+<main>
+  <div class="eyebrow">From Zero to Running Agent · Phase 1</div>
+  <h1>Business Interest Agent</h1>
+  <p class="subtle">Filter your JSON listing snapshot by asking price, draft five initial inquiries, then review and save them locally.</p>
+  <p class="small warn">Phase 1 does not browse live listings, verify availability, look up broker contacts, or send email.</p>
 
-  <div class="hero">
-    <p class="label eyebrow">From zero to running agent</p>
-    <h1>Find your next <em>stage</em></h1>
-    <p class="lead">Point it at a public GitHub project. It finds open calls for proposals that fit, checks they are real, and drafts a talk. Nothing is submitted until you say yes.</p>
-  </div>
-
-  <section aria-labelledby="h-project">
-    <div class="sec-head"><span class="label">01</span><h2 id="h-project">Your project</h2></div>
-    <form id="run-form" novalidate>
-      <div class="row">
-        <div class="field">
-          <label class="label" for="repo">GitHub repo URL</label>
-          <input id="repo" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://github.com/you/your-repo" aria-describedby="repo-hint">
-          <p class="hint" id="repo-hint">Leave it empty to use the sample project. The repo must be public.</p>
+  <section class="panel">
+    <h2>1. Select your JSON listings</h2>
+    <form id="run-form">
+      <div class="flex space-between">
+        <div style="flex:1 1 380px">
+          <label class="small" for="file">Optional JSON file (.json)</label>
+          <input id="file" type="file" accept=".json,application/json">
+          <p class="small">Leave empty to use the included <code>data/business_listings.json</code> file.</p>
         </div>
-        <div class="field action">
-          <span class="label" aria-hidden="true">&nbsp;</span>
-          <button class="btn cyan" id="run" type="submit">Run Mic Check</button>
-        </div>
+        <button id="run" type="submit">Filter &amp; draft emails</button>
       </div>
     </form>
+    <div class="small" id="configuration"></div>
     <div id="status" role="status" aria-live="polite"></div>
   </section>
 
-  <section id="results" aria-labelledby="h-results" hidden>
-    <div class="sec-head"><span class="label">02</span><h2 id="h-results">Ranked opportunities</h2></div>
-    <div id="project" class="project"></div>
-    <div id="scores" class="stack"></div>
-    <div id="rejected-wrap" hidden>
-      <div class="sec-head" style="margin-top: var(--space-8)"><span class="label">Check</span><h2>Rejected by the gate</h2></div>
-      <div id="rejected" class="stack"></div>
-    </div>
+  <section id="results" hidden>
+    <h2>2. Matching listings</h2>
+    <p class="small" id="source"></p>
+    <div class="stat-grid" id="stats"></div>
+    <p class="small">All eligible listings are sorted by ascending asking price. The first five receive drafts by default. No subjective acquisition ranking is performed.</p>
+    <div id="eligible" class="item-list" style="margin-top:16px"></div>
+    <details id="manual-wrap"><summary id="manual-summary">Needs manual review</summary><div class="detail-list" id="manual"></div></details>
+    <details id="rejected-wrap"><summary id="rejected-summary">Excluded listings</summary><div class="detail-list" id="rejected"></div></details>
   </section>
 
-  <section id="review" aria-labelledby="h-review" hidden>
-    <div class="sec-head"><span class="label">03</span><h2 id="h-review">Your call</h2></div>
-    <p class="lead" style="margin-bottom: var(--space-6)">The agent has paused. Approve, edit or reject each draft. Approved drafts are saved in <code class="path">outputs/</code> for you to submit yourself.</p>
-    <div id="drafts" class="stack"></div>
-    <div class="actions">
-      <button class="btn" id="send" type="button" disabled>Send decisions</button>
-      <span class="hint" id="send-hint">Choose approve or reject for every draft.</span>
-    </div>
-    <div id="done" role="status" aria-live="polite"></div>
+  <section id="review" hidden>
+    <h2>3. Review interest-email drafts</h2>
+    <p class="small">Edit the subject/body and approve or reject each draft. Approval saves files to <code>outputs/</code>; it does not send a message. Contact email is not included in the source JSON.</p>
+    <div id="drafts" style="margin-top: 18px"></div>
+    <button id="save" disabled type="button">Save approved drafts</button>
+    <span class="small" id="review-hint" style="margin-left:12px"></span>
+    <div id="review-result" role="status" aria-live="polite"></div>
   </section>
-
-  <footer class="label meta">Mic Check · built with LangGraph, LangChain and FastAPI · <a href="/docs">API docs</a></footer>
-</div>
-
+  <footer>LangGraph + LangChain + FastAPI · <a href="/docs">API documentation</a> · Run state is in memory (restart clears pending reviews).</footer>
+</main>
 <script>
 "use strict";
-const $ = (sel) => document.querySelector(sel);
-
-// Everything the agent shows came from a model or a stranger's README, so it is only ever
-// inserted as text, never as HTML.
-function h(tag, props, ...kids) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(props || {})) {
-    if (v == null) continue;
-    if (k === "class") node.className = v;
-    else if (k === "text") node.textContent = v;
-    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
-    else node.setAttribute(k, v);
-  }
-  for (const kid of kids.flat()) if (kid != null) node.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
-  return node;
+const $ = (selector) => document.querySelector(selector);
+const view = { runId: null, drafts: [], saved: false, model: "unknown" };
+const usd = (value) => typeof value === "number" ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value) : (value || "Price unknown");
+function node(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text != null) el.textContent = String(text);
+  return el;
 }
-
-async function api(path, options) {
-  let res;
+function link(url) {
   try {
-    res = await fetch(path, options);
-  } catch {
-    throw new Error("Could not reach the server. Is uvicorn still running?");
-  }
-  if (res.ok) return res.json();
-  let detail = "";
-  try { detail = (await res.json()).detail; } catch { /* not JSON */ }
-  if (res.status === 409) throw new Error("This run is not waiting for review. It may already be finished. Start a new run.");
-  if (res.status === 404) throw new Error("The server has no record of this run. If it restarted, start a new run.");
-  if (res.status === 422) throw new Error("The server could not read that request.");
-  if (res.status >= 500) throw new Error("The server hit an error. Look at the terminal running uvicorn for the details.");
-  throw new Error(typeof detail === "string" && detail ? detail : `Request failed (${res.status}).`);
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return null;
+    const anchor = node("a", "small", "View listing");
+    anchor.href = parsed.href;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    return anchor;
+  } catch { return null; }
 }
-
-function toast(target, kind, label, message, withSpinner) {
-  target.replaceChildren(h("div", { class: "toast " + kind, role: kind === "error" ? "alert" : null },
-    withSpinner ? h("span", { class: "spinner", "aria-hidden": "true" }) : null,
-    h("span", { class: "label", text: label }),
-    h("span", { text: message })));
+function message(target, text, type="") {
+  target.replaceChildren(node("div", "notice " + type, text));
 }
-
-const state = { runId: null, drafts: [], sent: false };
-
-/* ---------- ranked results ---------- */
-const ROUTES = {
-  apply_now: ["apply", "Apply now"],
-  maybe_later: ["maybe", "Maybe later"],
-  skip: ["skip", "Skip"],
-};
-
-function safeHttps(url) {
-  try { const u = new URL(url); return u.protocol === "https:" ? u.href : null; } catch { return null; }
+async function request(path, options) {
+  let response;
+  try { response = await fetch(path, options); }
+  catch { throw new Error("Cannot connect to the server. Check that uvicorn is running."); }
+  if (response.ok) return response.json();
+  let payload;
+  try { payload = await response.json(); } catch { /* ignore */ }
+  const detail = payload?.detail;
+  throw new Error(typeof detail === "string" ? detail : `Request failed (${response.status}).`);
 }
-
-function scoreCard(fit) {
-  const [cls, text] = ROUTES[fit.route] || ["plain", "Scored"];
-  const href = safeHttps(fit.cfp_url);
-  return h("article", { class: "card" + (fit.route === "apply_now" ? " wine" : "") },
-    h("div", { class: "card-top" },
-      h("div", {},
-        h("span", { class: "badge " + cls, text }),
-        h("h3", { text: fit.cfp_name }),
-        h("p", { class: "reason", text: fit.reason })),
-      h("div", { class: "score" }, h("b", { text: fit.topic_fit }), h("span", { text: " / 10" }))),
-    h("div", { class: "foot label meta" },
-      fit.cfp_deadline ? h("span", { text: "Closes " + fit.cfp_deadline }) : null,
-      h("span", { text: [fit.format, fit.audience_level].filter(Boolean).join(" · ") }),
-      href ? h("a", { href, target: "_blank", rel: "noopener noreferrer", text: "Open the CFP page" }) : null));
+function showStat(value, label) {
+  const root = node("div", "stat");
+  root.append(node("strong", "", value), node("span", "", label));
+  return root;
 }
-
-function rejectedCard(r) {
-  return h("article", { class: "card rejected" },
-    h("span", { class: "badge reject", text: "Rejected" }),
-    h("h3", { text: r.cfp_name }),
-    h("p", { class: "why", text: r.why }));
+function listingCard(item) {
+  const root = node("article", "listing");
+  const left = node("div");
+  left.append(node("div", "title", item.title || "Untitled listing"));
+  const details = node("div", "small", [item.source, item.location, item.industry].filter(Boolean).join(" · "));
+  left.append(details);
+  const hyperlink = link(item.listing_url);
+  if (hyperlink) left.append(hyperlink);
+  const right = node("div", "right");
+  right.append(node("strong", "", usd(item.asking_price_usd)));
+  if (item.route === "draft_email") right.append(node("span", "pill selected", "Email drafted"));
+  root.append(left, right);
+  return root;
 }
-
-function projectLine(project, model) {
-  if (!project) return [];
-  const fromWeb = typeof project.source === "string" && project.source.startsWith("https://");
-  return [
-    h("span", { class: "label meta", text: "Reading" }),
-    h("strong", { text: project.name }),
-    h("span", { class: "badge plain", text: fromWeb ? "From GitHub" : "Sample project" }),
-    model === "mock" ? h("span", { class: "badge maybe", text: "Mock scores" }) : null,
-  ];
+function reviewedRow(item) {
+  const el = node("div", "detail-row");
+  el.append(node("strong", "", item.title || "Untitled listing"));
+  el.append(node("div", "small", `${item.source || "Unknown source"} · ${usd(item.asking_price_usd ?? item.asking_price)}`));
+  el.append(node("div", "small", item.why || "Needs review"));
+  const hyperlink = link(item.listing_url);
+  if (hyperlink) el.append(hyperlink);
+  return el;
 }
-
-function showResults(run, model) {
+function showResults(result) {
   $("#results").hidden = false;
-  $("#project").replaceChildren(...projectLine(run.project, model));
-  const scores = run.scores || [];
-  $("#scores").replaceChildren(...(scores.length
-    ? scores.map(scoreCard)
-    : [h("div", { class: "card" },
-        h("p", { class: "reason", text: "No scores came back. If you are on the main branch, Reason is not built yet (Exercise 1)." }))]));
-  const rejected = run.rejected || [];
-  $("#rejected-wrap").hidden = rejected.length === 0;
-  $("#rejected").replaceChildren(...rejected.map(rejectedCard));
+  $("#source").textContent = `${result.source?.total ?? 0} records loaded from ${result.source?.source || "JSON"}; prices and status reflect the input snapshot.`;
+  const c = result.counts || {};
+  $("#stats").replaceChildren(
+    showStat(c.eligible || 0, "Eligible / under price cap"),
+    showStat(c.selected || 0, "Selected for email drafts"),
+    showStat(c.manual_review || 0, "Manual review needed"),
+    showStat(c.rejected || 0, "Excluded"),
+  );
+  const eligible = result.eligible || [];
+  $("#eligible").replaceChildren(...(eligible.length ? eligible.map(listingCard) : [node("div", "notice", "No listings pass the strict eligibility rules.")]));
+  for (const kind of ["manual", "rejected"]) {
+    const items = result[kind === "manual" ? "manual_review" : "rejected"] || [];
+    $("#" + kind + "-wrap").hidden = items.length === 0;
+    $("#" + kind + "-summary").textContent = (kind === "manual" ? "Needs manual review" : "Excluded listings") + ` (${items.length})`;
+    $("#" + kind).replaceChildren(...items.map(reviewedRow));
+  }
 }
-
-/* ---------- review ---------- */
 function draftCard(draft, index) {
-  const area = h("textarea", { id: "abstract-" + index, "aria-labelledby": "abs-label-" + index });
-  area.value = draft.abstract;
-  const name = "decision-" + index;
-  const choice = (value, text, cls) => {
-    const input = h("input", { type: "radio", name, value, onchange: updateSend });
-    return h("label", { class: "choice" }, input, h("span", { class: cls, text }));
-  };
-  const href = safeHttps(draft.cfp_url);
-  const card = h("article", { class: "card raised", "data-cfp": draft.cfp_id },
-    h("div", { class: "card-top" },
-      h("div", {},
-        h("span", { class: "label eyebrow", text: "Draft for " + draft.cfp_name }),
-        h("h3", { text: draft.title })),
-      h("span", { class: "badge wine", "data-status": "", text: "Waiting for you" })),
-    h("div", { class: "field", style: "margin-top: var(--space-5)" },
-      h("label", { class: "label", id: "abs-label-" + index, for: "abstract-" + index, text: "Abstract. Edit it if you like" }),
-      area),
-    h("fieldset", { class: "choices", "aria-label": "Decision for " + draft.cfp_name },
-      h("legend", { class: "label", text: "Your decision" }),
-      choice("approve", "Approve", "approve"),
-      choice("reject", "Reject", "reject")),
-    h("div", { class: "foot label meta" },
-      draft.cfp_deadline ? h("span", { text: "Submit by " + draft.cfp_deadline }) : null,
-      href ? h("a", { href, target: "_blank", rel: "noopener noreferrer", text: "Open the CFP page" }) : null));
-  return card;
+  const el = node("article", "draft");
+  el.dataset.listingKey = draft.listing_key;
+  const header = node("header");
+  const title = node("div");
+  title.append(node("h3", "", draft.title));
+  const hyperlink = link(draft.listing_url);
+  if (hyperlink) title.append(hyperlink);
+  header.append(title, node("span", "pill", draft.generation_mode));
+  el.append(header);
+  if (draft.generation_note) el.append(node("p", "small warn", draft.generation_note));
+  const subjectField = node("div", "field");
+  const subjectLabel = node("label", "", "Email subject");
+  subjectLabel.htmlFor = "subject-" + index;
+  const subjectInput = node("input");
+  subjectInput.type = "text";
+  subjectInput.id = "subject-" + index;
+  subjectInput.maxLength = 200;
+  subjectInput.value = draft.subject;
+  subjectField.append(subjectLabel, subjectInput);
+  const bodyField = node("div", "field");
+  const bodyLabel = node("label", "", "Email body");
+  bodyLabel.htmlFor = "body-" + index;
+  const bodyInput = node("textarea");
+  bodyInput.id = "body-" + index;
+  bodyInput.maxLength = 6000;
+  bodyInput.value = draft.body;
+  bodyField.append(bodyLabel, bodyInput);
+  el.append(subjectField, bodyField);
+  const decisionField = node("fieldset");
+  decisionField.append(node("legend", "", "Review decision"));
+  for (const [action, text] of [["approve", "Approve and save"], ["reject", "Reject"]]) {
+    const label = node("label");
+    const radio = node("input");
+    radio.type = "radio"; radio.name = "decision-" + index; radio.value = action;
+    radio.addEventListener("change", updateSave);
+    label.append(radio, " " + text);
+    decisionField.append(label);
+  }
+  el.append(decisionField);
+  return el;
 }
-
-function showReview(drafts) {
-  state.drafts = drafts;
-  state.sent = false;
-  $("#done").replaceChildren();
+function showDrafts(drafts) {
+  view.drafts = drafts;
+  view.saved = false;
+  $("#review-result").replaceChildren();
   $("#drafts").replaceChildren(...drafts.map(draftCard));
   $("#review").hidden = false;
-  updateSend();
+  updateSave();
 }
-
-function decisionFor(card, draft) {
-  const picked = card.querySelector("input[type=radio]:checked");
-  if (!picked) return null;
-  if (picked.value === "reject") return { cfp_id: draft.cfp_id, action: "reject" };
-  const abstract = card.querySelector("textarea").value;
-  return abstract.trim() !== draft.abstract.trim()
-    ? { cfp_id: draft.cfp_id, action: "edit", abstract }
-    : { cfp_id: draft.cfp_id, action: "approve" };
+function updateSave() {
+  const cards = [...document.querySelectorAll("#drafts .draft")];
+  const decided = cards.filter(c => c.querySelector("input[type=radio]:checked")).length;
+  $("#save").disabled = view.saved || !cards.length || decided !== cards.length;
+  $("#review-hint").textContent = view.saved ? "Review saved." : `Decisions made: ${decided}/${cards.length}`;
 }
-
-function updateSend() {
-  const cards = [...document.querySelectorAll("#drafts .card")];
-  const decided = cards.filter((c) => c.querySelector("input[type=radio]:checked")).length;
-  const ready = cards.length > 0 && decided === cards.length && !state.sent;
-  $("#send").disabled = !ready;
-  $("#send-hint").textContent = state.sent ? "" : ready ? "Ready when you are." : `Choose approve or reject for every draft (${decided} of ${cards.length}).`;
-}
-
-async function sendDecisions() {
-  const cards = [...document.querySelectorAll("#drafts .card")];
-  const decisions = cards.map((card, i) => decisionFor(card, state.drafts[i]));
-  if (decisions.some((d) => d === null)) return;
-  $("#send").disabled = true;
-  toast($("#done"), "info", "Sending", "Resuming the agent.", true);
-  try {
-    const result = await api(`/runs/${encodeURIComponent(state.runId)}/review`, {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(decisions),
-    });
-    state.sent = true;
-    const statusById = new Map(result.drafts.map((d) => [d.cfp_id, d.status]));
-    cards.forEach((card) => {
-      const status = statusById.get(card.dataset.cfp);
-      const badge = card.querySelector("[data-status]");
-      badge.textContent = status === "approved" ? "Approved" : "Rejected";
-      badge.className = "badge " + (status === "approved" ? "apply" : "reject");
-      card.querySelectorAll("input, textarea").forEach((n) => { n.disabled = true; });
-    });
-    const approved = result.drafts.filter((d) => d.status === "approved").length;
-    toast($("#done"), "ok", "Done", approved
-      ? `${approved} approved and saved in outputs/. Nothing was submitted. That part is up to you.`
-      : "All rejected, so nothing was saved. Nothing was submitted.");
-    $("#send-hint").textContent = "";
-  } catch (err) {
-    toast($("#done"), "error", "Error", err.message);
-    updateSend();
-  }
-}
-
-/* ---------- run ---------- */
-let model = null;
-
-async function run(event) {
-  event.preventDefault();
-  const input = $("#repo");
-  const value = input.value.trim();
-  const hint = $("#repo-hint");
-  if (value && !/^https:\/\/github\.com\/[^/\s]+\/[^/\s]+/.test(value)) {
-    input.setAttribute("aria-invalid", "true");
-    hint.className = "hint error";
-    hint.textContent = "Use a public GitHub URL like https://github.com/you/your-repo, or leave it empty.";
-    input.focus();
-    return;
-  }
-  input.removeAttribute("aria-invalid");
-  hint.className = "hint";
-  hint.textContent = "Leave it empty to use the sample project. The repo must be public.";
-
-  $("#run").disabled = true;
-  $("#results").hidden = true;
-  $("#review").hidden = true;
-  toast($("#status"), "info", "Running", "Gather, Reason, Check, Decide and Draft. A real model can take up to a minute.", true);
-  try {
-    const run = await api("/runs", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ repo_url: value || null }),
-    });
-    state.runId = run.run_id;
-    showResults(run, model);
-    if (run.waiting_for_review) {
-      const { drafts } = await api(`/runs/${encodeURIComponent(run.run_id)}/drafts`);
-      showReview(drafts);
-      toast($("#status"), "ok", "Paused", "Drafts are waiting for your approval.");
-    } else if ((run.scores || []).length) {
-      toast($("#status"), "info", "Finished", "Nothing scored high enough to draft, so there is nothing to approve.");
-    } else {
-      toast($("#status"), "info", "Finished", "No scores came back.");
+async function saveReview() {
+  const cards = [...document.querySelectorAll("#drafts .draft")];
+  const decisions = [];
+  for (const [i, card] of cards.entries()) {
+    const draft = view.drafts[i];
+    const choice = card.querySelector("input[type=radio]:checked")?.value;
+    if (!choice) return;
+    const subject = card.querySelector("input[type=text]").value.trim();
+    const body = card.querySelector("textarea").value.trim();
+    if (choice === "approve" && (!subject || !body)) {
+      message($("#review-result"), `Email ${i + 1} has an empty subject or body.`, "error");
+      return;
     }
-  } catch (err) {
-    toast($("#status"), "error", "Error", err.message);
-  } finally {
-    $("#run").disabled = false;
+    const edited = subject !== draft.subject.trim() || body !== draft.body.trim();
+    decisions.push(choice === "reject"
+      ? { listing_key: draft.listing_key, action: "reject" }
+      : { listing_key: draft.listing_key, action: edited ? "edit" : "approve", subject, body });
+  }
+  $("#save").disabled = true;
+  message($("#review-result"), "Saving your approved emails to the project's outputs/ directory...");
+  try {
+    const result = await request(`/runs/${encodeURIComponent(view.runId)}/review`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(decisions),
+    });
+    view.saved = true;
+    const count = (result.drafts || []).filter(x => x.status === "approved").length;
+    message($("#review-result"), `${count} approved draft(s) saved under outputs/ as Markdown and JSON. No email was sent.`, "success");
+    cards.forEach(card => card.querySelectorAll("input,textarea").forEach(x => x.disabled = true));
+    updateSave();
+  } catch (error) {
+    message($("#review-result"), error.message, "error");
+    updateSave();
   }
 }
-
-async function init() {
-  $("#run-form").addEventListener("submit", run);
-  $("#send").addEventListener("click", sendDecisions);
+async function start(event) {
+  event.preventDefault();
+  const button = $("#run");
+  button.disabled = true;
+  $("#results").hidden = true; $("#review").hidden = true;
+  message($("#status"), "Reading input, filtering prices and drafting interest emails...");
   try {
-    const health = await api("/health");
-    model = health.model;
-    const tag = $("#model-tag");
-    tag.hidden = false;
-    tag.classList.toggle("mock", model === "mock");
-    $("#model-text").textContent = "Model · " + model;
-  } catch { /* the page still works without the tag */ }
+    const selected = $("#file").files[0];
+    let body = {};
+    if (selected) {
+      if (selected.size > 3_000_000) throw new Error("JSON file is too large (max 3 MB in the web interface).");
+      let parsed;
+      try { parsed = JSON.parse(await selected.text()); }
+      catch { throw new Error("Invalid JSON file; check its syntax."); }
+      const listings = Array.isArray(parsed) ? parsed : parsed?.listings;
+      if (!Array.isArray(listings)) throw new Error("JSON must be an array of listing objects (or an object with a listings array).");
+      if (!listings.every(x => x && typeof x === "object" && !Array.isArray(x))) throw new Error("Every listing must be a JSON object.");
+      body = { listings, source_name: selected.name };
+    }
+    const result = await request("/runs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    view.runId = result.run_id;
+    showResults(result);
+    if (result.waiting_for_review) {
+      const review = await request(`/runs/${encodeURIComponent(view.runId)}/drafts`);
+      showDrafts(review.drafts || []);
+      message($("#status"), "Drafts ready for review. No email was sent.", "success");
+    } else {
+      message($("#status"), "Filter complete; no drafts were generated. Review the listing eligibility details below.");
+    }
+  } catch (error) {
+    message($("#status"), error.message, "error");
+  } finally { button.disabled = false; }
+}
+async function init() {
+  $("#run-form").addEventListener("submit", start);
+  $("#save").addEventListener("click", saveReview);
+  try {
+    const health = await request("/health");
+    view.model = health.model;
+    $("#configuration").textContent = `Model: ${health.model} · Strict price cap: ${usd(health.max_asking_price)} · Max drafts: ${health.max_drafts}`;
+  } catch { /* static page remains usable */ }
 }
 init();
 </script>

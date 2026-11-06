@@ -1,41 +1,44 @@
-"""The agent behind an API.
+"""Local Phase 1 FastAPI interface for business listing interest drafts.
 
     uvicorn main:app --reload
-    then open http://localhost:8000 for the Mic Check page,
-    or http://localhost:8000/docs to try the endpoints directly
+    Open http://127.0.0.1:8000
+
+The API accepts parsed JSON arrays, never arbitrary local filesystem paths.
 """
 import uuid
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from langgraph.types import Command
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from agent import config
 from agent.graph import build_graph
+from agent.listings import MAX_RECORDS
 
-app = FastAPI(title="Mic Check")
-graph = build_graph()  # in-memory checkpoints, so runs live as long as the server does
+app = FastAPI(title="Business Interest Agent — Phase 1")
+graph = build_graph()  # MemorySaver: pending approvals disappear on server restart
 
 
 class RunRequest(BaseModel):
-    repo_url: str | None = None  # a GitHub repo URL, or leave empty for the sample README
+    listings: list[dict[str, Any]] | None = None
+    source_name: str = Field(default="Uploaded JSON", max_length=120)
 
-    @field_validator("repo_url")
+    @field_validator("listings")
     @classmethod
-    def github_only(cls, url):
-        # Gather also accepts local file paths for the CLI. Over HTTP that would let a caller read any file on the server.
-        if url is not None and not url.startswith("https://github.com/"):
-            raise ValueError("repo_url must start with https://github.com/")
-        return url
+    def max_records(cls, listings):
+        if listings is not None and len(listings) > MAX_RECORDS:
+            raise ValueError(f"Maximum {MAX_RECORDS} listings per run")
+        return listings
 
 
 class Decision(BaseModel):
-    cfp_id: str
+    listing_key: str = Field(min_length=1, max_length=1600)
     action: Literal["approve", "edit", "reject"]
-    abstract: str | None = None
+    subject: str | None = Field(default=None, max_length=200)
+    body: str | None = Field(default=None, max_length=6000)
 
 
 def config_for(run_id: str) -> dict:
@@ -44,30 +47,40 @@ def config_for(run_id: str) -> dict:
 
 @app.post("/runs")
 def start_run(req: RunRequest):
-    """Start a run. It goes until the pause and returns the drafts waiting for review."""
     run_id = uuid.uuid4().hex[:8]
-    result = graph.invoke({"run_id": run_id, "readme_source": req.repo_url}, config_for(run_id))
+    initial = {"run_id": run_id}
+    if req.listings is not None:
+        initial["input_listings"] = req.listings
+        initial["listings_source"] = req.source_name
+    result = graph.invoke(initial, config_for(run_id))
     return {
         "run_id": run_id,
         "waiting_for_review": "__interrupt__" in result,
-        "project": {"name": result["profile"]["name"], "source": result["profile"]["source"]},
-        "scores": result.get("scores", []),
+        "source": result.get("source_summary", {}),
+        "eligible": result.get("eligible", []),
+        "selected": result.get("selected", []),
+        "manual_review": result.get("manual_review", []),
         "rejected": result.get("rejected", []),
+        "counts": {
+            "eligible": len(result.get("eligible", [])),
+            "selected": len(result.get("selected", [])),
+            "manual_review": len(result.get("manual_review", [])),
+            "rejected": len(result.get("rejected", [])),
+        },
     }
 
 
 @app.get("/runs/{run_id}/drafts")
 def list_drafts(run_id: str):
-    """List the drafts for a run, with their status."""
     snapshot = graph.get_state(config_for(run_id))
     if not snapshot.values:
-        raise HTTPException(404, "No run with that id")
-    return {"run_id": run_id, "paused": bool(snapshot.next), "drafts": snapshot.values.get("drafts", [])}
+        raise HTTPException(404, "No run with that id; the server may have restarted")
+    return {"run_id": run_id, "paused": bool(snapshot.next),
+            "drafts": snapshot.values.get("drafts", [])}
 
 
 @app.post("/runs/{run_id}/review")
 def review(run_id: str, decisions: list[Decision]):
-    """Approve, edit or reject drafts. This resumes the graph. Nothing is ever submitted for you."""
     snapshot = graph.get_state(config_for(run_id))
     if not snapshot.values:
         raise HTTPException(404, "No run with that id")
@@ -79,10 +92,10 @@ def review(run_id: str, decisions: list[Decision]):
 
 @app.get("/", include_in_schema=False)
 def home():
-    """A simple page that calls the endpoints below. All the logic stays in the API."""
     return FileResponse(Path(__file__).parent / "ui" / "index.html")
 
 
 @app.get("/health")
 def health():
-    return {"ok": True, "model": config.MODEL_PROVIDER}
+    return {"ok": True, "model": config.MODEL_PROVIDER,
+            "max_asking_price": config.MAX_ASKING_PRICE, "max_drafts": config.MAX_DRAFTS}

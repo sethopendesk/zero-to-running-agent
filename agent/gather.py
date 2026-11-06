@@ -1,78 +1,17 @@
-"""Gather. Plain code that collects facts. No model calls on purpose.
-
-Prewritten in the repo. In the workshop we read it together and run it.
-"""
-import json
-import re
-from pathlib import Path
-
-import httpx
-
+"""Gather business listings from uploaded JSON or the bundled data snapshot."""
 from agent import config
+from agent.listings import load_listings, unpack_listings
 from agent.log import log_event
 from agent.state import AgentState
 
-SAMPLE_README = config.DATA_DIR / "sample_readme.md"
 
-# Words that hint at what a project is about. Plain keyword matching, nothing clever.
-TOPIC_KEYWORDS = {
-    "python": ["python", "pip", "pypi", "fastapi", "django", "flask"],
-    "javascript": ["javascript", "typescript", "node", "react", "npm"],
-    "data": ["data", "pipeline", "sql", "database", "analytics", "etl", "ml", "llm", "ai", "agent"],
-    "devops": ["kubernetes", "docker", "ci", "deploy", "infrastructure", "terraform"],
-    "security": ["security", "auth", "vulnerability", "encryption"],
-    "opensource": ["open source", "open-source", "contributors", "license", "mit", "apache"],
-    "ux": ["design", "ux", "accessibility", "user experience"],
-}
-
-
-def read_readme(source: str | None) -> tuple[str, str]:
-    """Return (readme_text, where_it_came_from). Accepts a GitHub repo URL, a local path, or nothing."""
-    if source and source.startswith("https://github.com/"):
-        owner_repo = "/".join(source.rstrip("/").removeprefix("https://github.com/").split("/")[:2])
-        # raw.githubusercontent.com doesn't count against the GitHub API rate limit,
-        # which matters when 100 people share one conference wifi.
-        for name in ("README.md", "readme.md", "README.rst", "README"):
-            url = f"https://raw.githubusercontent.com/{owner_repo}/HEAD/{name}"
-            try:
-                resp = httpx.get(url, timeout=10, follow_redirects=True)
-            except httpx.HTTPError:
-                break
-            if resp.status_code == 200:
-                return resp.text, url
-        print(f"Couldn't fetch a README from {source}, using the sample README instead.")
-    elif source and Path(source).exists():
-        return Path(source).read_text(encoding="utf-8"), source
-    return SAMPLE_README.read_text(encoding="utf-8"), str(SAMPLE_README)
-
-
-def _has_word(text: str, word: str) -> bool:
-    """Match whole words, so short keywords like "ai" or "ci" don't fire inside "maiden" or "city"."""
-    return re.search(rf"\b{re.escape(word)}(?:s|es|ed|ing|ment)?\b", text) is not None
-
-
-def build_profile(readme: str, source: str) -> dict:
-    """Turn a README into a small profile. Plain string handling, no model."""
-    title_match = re.search(r"^#\s+(.+)$", readme, re.MULTILINE)
-    lowered = readme.lower()
-    topics = [topic for topic, words in TOPIC_KEYWORDS.items() if any(_has_word(lowered, w) for w in words)]
-    return {
-        "name": title_match.group(1).strip() if title_match else "Untitled project",
-        "source": source,
-        "topics": topics,
-        # Keep the excerpt short so free-tier token limits aren't a problem.
-        "summary": readme[:2000],
-    }
-
-
-def readme_node(state: AgentState) -> dict:
-    readme, source = read_readme(state.get("readme_source"))
-    profile = build_profile(readme, source)
-    log_event(state["run_id"], "gather", "profile_built", project=profile["name"], topics=profile["topics"])
-    return {"profile": profile}
-
-
-def cfp_node(state: AgentState) -> dict:
-    data = json.loads((config.DATA_DIR / "cfps.json").read_text(encoding="utf-8"))
-    log_event(state["run_id"], "gather", "cfps_loaded", count=len(data["cfps"]), snapshot=data["snapshot_date"])
-    return {"opportunities": data["cfps"]}
+def gather_node(state: AgentState) -> dict:
+    source = state.get("listings_source") or str(config.DEFAULT_LISTINGS)
+    if "input_listings" in state and state["input_listings"] is not None:
+        listings = unpack_listings(state["input_listings"])
+        source = state.get("listings_source") or "Uploaded JSON"
+    else:
+        listings = load_listings(source)
+    summary = {"source": str(source), "total": len(listings)}
+    log_event(state["run_id"], "gather", "listings_loaded", count=len(listings), source=str(source))
+    return {"opportunities": listings, "source_summary": summary}

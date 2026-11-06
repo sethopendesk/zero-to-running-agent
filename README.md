@@ -1,130 +1,90 @@
-# From Zero to Running Agent
+# Business Interest Agent — Phase 1
 
-The starter repo for the All Things Open 2026 deep dive. You'll build Mic Check, an agent that reads your GitHub project, finds conference CFPs (a CFP is a call for proposals, where a conference invites people to apply to speak) that fit it, checks them, ranks them, and drafts a proposal that waits for your approval.
+Adapted from [daphnecharles/zero-to-running-agent](https://github.com/daphnecharles/zero-to-running-agent/tree/step-3) (the All Things Open 2026 workshop's `step-3` branch).
 
-It's a simplified version of the architecture behind the [Sparx Growth Engine](https://github.com/daphnecharles/sparx-growth-engine), built with LangGraph, LangChain, FastAPI and Claude.
+**What it does:** Reads business listings from a local JSON file or a browser-uploaded JSON file, finds active listings with a numeric asking price **strictly below $1,000,000**, sorts them by price, drafts up to **five** non-binding inquiry emails, and pauses for human review. Approved drafts are saved locally as Markdown and JSON. **It never sends emails or contacts brokers.**
 
-## Before the workshop
+**What it doesn't do (yet):** Search for fresh listings, visit/verify listing pages, detect broker email addresses, assess investment quality, or calculate all-in costs for price ranges and inventory/real-estate extras. Uncertain records go into `manual_review` instead of being guessed eligible.
 
-You need **Python 3.10 or newer** and git. On macOS the command is `python3`, because there is no plain `python` until your virtual environment is active (so `python -m venv` fails on a fresh Mac). Use `python3` for the `venv` line only. macOS also ships Python 3.9, which is too old (`pip install` fails with `No matching distribution found for langgraph>=1.0`). Check with `python3 --version`. If it is older, install a newer one (`brew install python@3.12`) and use `python3.12` in place of `python` for the `python -m venv` line below. After that, `python` inside the virtual environment is the right version.
+## Apply the ZIP to an existing step-3 clone (Windows PowerShell)
 
-macOS or Linux
+See **[PHASE1_SETUP.md](PHASE1_SETUP.md)** for backup advice and the complete instructions. The ZIP is an overlay, **not a standalone clone**. It contains updated and new files at their existing repo-relative paths. It does not include `.git`, `.venv`, your `.env`, or the untouched workshop files.
 
-```bash
-git clone https://github.com/daphnecharles/zero-to-running-agent
-cd zero-to-running-agent
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python scripts/setup_check.py
+```powershell
+cd "C:\path\to\zero-to-running-agent"
+# Check branch and any local changes before overwriting files:
+git branch --show-current
+git status --short
+
+Expand-Archive -LiteralPath "$env:USERPROFILE\Downloads\business_interest_phase1_overlay.zip" -DestinationPath . -Force
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pytest -q tests/test_business_phase1.py tests/test_business_graph.py
 ```
 
-Windows (Command Prompt or PowerShell)
+Use the `step-3` branch as the base. **Existing `.env` remains untouched**, so your Gemini or Anthropic key should still be available.
 
-```bat
-git clone https://github.com/daphnecharles/zero-to-running-agent
-cd zero-to-running-agent
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python scripts/setup_check.py
+## Run in PowerShell
+
+```powershell
+# Terminal interface, bundled dataset:
+.\.venv\Scripts\python.exe run.py
+
+# Or choose another local JSON file:
+.\.venv\Scripts\python.exe run.py .\data\business_listings.json
+
+# Browser interface:
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
 
-In PowerShell, `.venv\Scripts\activate` can fail with "running scripts is disabled on this system". Allow scripts for this window only with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, then run `.venv\Scripts\activate` again. Or skip activation and put `.venv\Scripts\` in front of each command, for example `.venv\Scripts\python run.py`.
+Open `http://127.0.0.1:8000`. Upload a `.json` file or leave the file field empty to use the bundled data. You will see eligible, manual-review, and excluded records. Edit, approve or reject drafts. Approved files appear under `outputs/` (gitignored).
 
-You should see `READY`. If your local Python setup fights you, [open the repo in GitHub Codespaces](https://codespaces.new/daphnecharles/zero-to-running-agent) instead. The dev container installs everything for you.
+To preview without a model API call, set `MODEL_PROVIDER=mock` in `.env` or only for one PowerShell session:
 
-Cloned before October 18? Run `git pull`.
-
-Tip: `python scripts/setup_check.py` also works before `pip install`. It reports a Python that is too old first.
-
-## Setting a variable for one run
-
-Some commands in this repo put a variable in front, like `TODAY=2026-10-19 python run.py`. That form only works in macOS and Linux shells. Pick the form for your shell.
-
-| Shell | Form |
-|---|---|
-| macOS, Linux | `TODAY=2026-10-19 python run.py` |
-| Windows PowerShell | `$env:TODAY="2026-10-19"; python run.py` (then `Remove-Item Env:TODAY` when you are done) |
-| Windows Command Prompt | `set TODAY=2026-10-19&& python run.py` (then `set TODAY=` when you are done) |
-| Any shell | Add `TODAY=2026-10-19` as a line in `.env` (delete it when you are done) |
-
-The same goes for `LET_MODEL_SUGGEST=true` and any other variable in `.env.example`. `cat` and `tail` in EXERCISES.md also have Windows equivalents, which are listed there.
-
-## Pick your model
-
-| Option | When | Set in `.env` |
-|---|---|---|
-| Claude | Default | `MODEL_PROVIDER=claude` and `ANTHROPIC_API_KEY` |
-| Gemini 3.5 Flash Lite | No Claude credits. Free key from [AI Studio](https://aistudio.google.com), no credit card | `MODEL_PROVIDER=gemini` and `GOOGLE_API_KEY` |
-| Mock | Neither works | `MODEL_PROVIDER=mock` |
-
-Everything the agent sends to a model is a public README and public CFP listings. If you use the Gemini free tier, read Google's free-tier data terms first.
-
-Mock mode is the quickest way through, but it skips the model code: the tool loop and structured output in Reason, and the drafting in Act, never run. Try a real model when you can.
-
-## Run it
-
-```bash
-python run.py                                  # the sample project
-TODAY=2026-10-19 python run.py                 # match the dates in EXERCISES.md
-python run.py https://github.com/you/your-repo # your own project
-uvicorn main:app --reload                      # the API and the Mic Check page, then open localhost:8000
+```powershell
+$env:MODEL_PROVIDER = "mock"
+.\.venv\Scripts\python.exe run.py
+Remove-Item Env:MODEL_PROVIDER
 ```
 
-`main.py` is the agent's own web API, built with FastAPI. Start it with the `uvicorn` command, then open [localhost:8000](http://localhost:8000) for a simple Mic Check page. Paste a public GitHub repo (or leave it empty for the sample project), read the ranked conferences, and approve, edit or reject each draft with buttons. The page only calls the API, so all the logic stays in the agent. To try the raw endpoints, open [localhost:8000/docs](http://localhost:8000/docs).
+Mock mode creates complete, editable template emails. If the configured real model fails to initialize or draft, the agent also uses a **labeled fallback template** instead of silently pretending to have generated an AI email.
 
-## Exercises
+## Listing input format
 
-New to this? Work through [EXERCISES.md](EXERCISES.md). It has three guided exercises, one per build, with a time box, the files to open, numbered steps that match the `TODO` comments in the code, the output you should see, common errors and a catch-up command.
+The supplied `data/business_listings.json` is a JSON array of 118 listing objects. Each entry can include:
 
-Run `python -m pytest` (or just `pytest`) any time. The Check and Decide tests fail on `main` and `step-1` until you finish Exercise 2, and pass on `step-2` and `step-3`.
+```json
+{
+  "id": 1,
+  "source": "Brokerage Name",
+  "title": "Example Business",
+  "listing_url": "https://example.com/listing/123",
+  "status": "Active",
+  "asking_price": "$300,000",
+  "asking_price_usd": 300000,
+  "location": "Raleigh, NC",
+  "industry": "Business Services",
+  "includes": "Business"
+}
+```
 
-## How it works
+A wrapped JSON object `{ "listings": [...] }` is also accepted. `asking_price_usd` must be a *number*, not a formatted string. Prices that are absent, ranges, ambiguous, or include extra costs are flagged for manual review. `asking_price_usd == 1000000` is excluded. Sold, pending, under-contract and coming-soon listings are excluded.
 
-Five stages, each with one job.
+The default snapshot results (tested against the supplied file): **56 eligible**, **24 manual review**, **38 excluded**. One of the 57 initially price-matching records is a real-estate-only listing and is therefore held for manual review. The five least expensive eligible listings receive drafts by default. **No source website is checked live.**
 
-| Stage | File | What it does |
-|---|---|---|
-| Gather | `agent/gather.py` | Reads your README and loads CFPs. Plain code, no model |
-| Reason | `agent/reason.py` | Claude scores every CFP through tools and a Pydantic schema |
-| Check | `agent/check.py` | Code checks that each CFP is real, has a working link and is still open |
-| Decide | `agent/decide.py` | Routes each CFP to apply now, maybe later or skip |
-| Act | `agent/act.py` | Drafts proposals, then pauses until a human approves, edits or rejects |
+## What changed
 
-`agent/state.py` is the shared state every stage reads and writes, and `agent/graph.py` wires the stages together. Every event is logged to `logs/runs.jsonl`.
+The existing LangGraph orchestration still follows Gather → Check → Reason (price sort) → Decide → Draft → Review → Save. The conference-specific nodes, schemas, terminal runner, API and UI were replaced. The unchanged `agent/llm.py`, `agent/log.py` and `requirements.txt` remain part of your existing repository.
 
-The agent never submits anything. Approved drafts are saved to `outputs/` for you to submit yourself.
+- `agent/listings.py`: normalized source records, deduplication, strict filter and manual-review handling.
+- `agent/drafting.py`: deterministic emails, review decisions, Markdown/JSON saving.
+- `agent/gather.py`, `check.py`, `reason.py`, `decide.py`, `act.py`, `graph.py`, `state.py`, `config.py`: Phase 1 workflow.
+- `run.py`: CLI input and approval flow.
+- `main.py` and `ui/index.html`: browser JSON upload, listing results and editable approvals.
+- `tests/test_business_phase1.py`: offline unit tests.
+- `tests/test_business_graph.py`: integration tests using LangGraph in mock mode.
 
-## Workshop branches
+The workshop's old `EXERCISES.md` and original conference tests (if present) are no longer applicable to the adapted workflow; run the Phase 1 tests shown above. The run checkpoint is in memory: restarting the API clears pending approvals. Saved output files remain on disk.
 
-| Branch | What's done |
-|---|---|
-| `main` | Gather. Where the workshop starts |
-| `step-1` | + Reason (end of Exercise 1) |
-| `step-2` | + Check and Decide (end of Exercise 2) |
-| `step-3` | + Act and the API. The finished agent |
+## Safety and data
 
-`step-N` means Exercise N is finished.
-
-Fallen behind? `git stash && git checkout step-N` and keep going.
-
-## Try these
-
-- **Prompt injection.** Run `python run.py data/injected_readme.md`. That README hides instructions aimed at the model. See whether they change anything, and notice which stages couldn't be fooled either way. This only means something with a real model (`claude` or `gemini`). Mock mode scores by keyword overlap, so nothing in the README can influence it. With a real model, Decide trusts the model's score, so an injected 10 would reach `apply_now`. The `<project>` tags in the draft prompt help but are not a guarantee (a README can contain `</project>`). The human approval step is the control that holds.
-- **Rehearse another day.** `TODAY=2026-11-02 python run.py` shows what the gate does once more deadlines pass.
-
-## Take it further
-
-- Add podcast or newsletter opportunities as a second Gather source.
-- Read every repo in a GitHub account and run the pipeline on each one in parallel with LangGraph's `Send`.
-- Replace the code gate with a second model pass for judgment calls, and keep a human at the end.
-
-## CFP data
-
-`data/cfps.json` is a snapshot of the open [confs.tech](https://confs.tech) dataset ([tech-conferences/conference-data](https://github.com/tech-conferences/conference-data)). Refresh it with `python scripts/refresh_fixtures.py --as-of YYYY-MM-DD`.
-
-## License
-
-MIT
+Listing records are untrusted and may be stale. Human review is required before saving drafts, and the draft may still contain errors or unsupported claims. Do not send an outreach message without verifying the actual listing and filling in the correct broker contact and your own identity. Model providers may receive public listing data for drafting. No email integration or SMTP sending code is included.
