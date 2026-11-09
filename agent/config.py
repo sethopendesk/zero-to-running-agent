@@ -17,6 +17,6 @@ MAX_ASKING_PRICE = int(os.getenv("MAX_ASKING_PRICE", "1000000"))
 MAX_DRAFTS = max(0, int(os.getenv("MAX_DRAFTS", "5")))
 
 DATA_DIR = ROOT / "data"
-DEFAULT_LISTINGS = DATA_DIR / "business_listings.json"
+DEFAULT_LISTINGS = DATA_DIR / "new_business_listings.json"
 LOG_DIR = ROOT / "logs"
 OUTPUT_DIR = ROOT / "outputs"

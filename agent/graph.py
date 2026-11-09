@@ -8,10 +8,12 @@ from agent.decide import after_decide, decide_node
 from agent.gather import gather_node
 from agent.reason import reason_node
 from agent.state import AgentState
+from agent.scrape import scrape_node
 
 
 def build_graph(checkpointer=None):
     graph = StateGraph(AgentState)
+    graph.add_node("scrape", scrape_node)
     graph.add_node("gather", gather_node)
     graph.add_node("check", check_node)
     graph.add_node("reason", reason_node)
@@ -22,7 +24,8 @@ def build_graph(checkpointer=None):
     graph.add_node("send", send_node)
 
 
-    graph.add_edge(START, "gather")
+    graph.add_edge(START, "scrape")
+    graph.add_edge("scrape", "gather")
     graph.add_edge("gather", "check")
     graph.add_edge("check", "reason")
     graph.add_edge("reason", "decide")

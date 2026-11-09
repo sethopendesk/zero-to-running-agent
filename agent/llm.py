@@ -2,6 +2,7 @@
 import logging
 import re
 import time
+import os
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -40,4 +41,9 @@ def get_llm() -> BaseChatModel | None:
         return _patient_gemini()
     from langchain_anthropic import ChatAnthropic
 
-    return ChatAnthropic(model=config.CLAUDE_MODEL, max_retries=4, max_tokens=4096)
+    return ChatAnthropic(model=config.CLAUDE_MODEL,
+                         max_retries=4,
+                         max_tokens=4096,
+                         default_headers={
+                             "anthropic-workspace-id": os.environ["ANTHROPIC_WORKSPACE_ID"]
+                         })
